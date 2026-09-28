@@ -903,7 +903,9 @@ T_07_06_css_chr <- "
   .accordion-item, .accordion-button, .story, .prompt, .problem,
   .stat-tile, .stat-input input, .btn, .form-control, .form-select,
   .badge { border-radius: 0 !important; }
-  .card, .bslib-card { box-shadow: none; }
+  .card, .bslib-card { border: none; box-shadow: none; }
+  .card-header { border-bottom: none; background: transparent; }
+  .card-footer { border-top: none; background: transparent; }
   .stat-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
   .stat-caption { font-size: 0.9rem; color: #6C757D; margin: 0.2rem 0; }
   .stat-slot { flex: 1 1 11rem; display: flex; }
