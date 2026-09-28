@@ -781,7 +781,8 @@ T_06_06_explain_fn <- function(items, groups) {
         shiny::tags$tr(
           shiny::tags$td(class = "eq-label", shiny::HTML(x$label),
                          T_06_02_flag_fn(x$status)),
-          shiny::tags$td(shiny::tags$div(T_06_01_mj_fn(x$tex)),
+          shiny::tags$td(class = "eq-math",
+                         shiny::tags$div(T_06_01_mj_fn(x$tex)),
                          if (!is.null(x$was)) {
                            shiny::tags$div(class = "chg-was", "was ",
                                            T_06_01_mj_fn(x$was))
@@ -931,7 +932,10 @@ T_07_06_css_chr <- "
   .eq-new     { background: #61B77C; }
   .eq-changed { background: #0056A4; }
   .eq-legend  { font-size: 0.88rem; color: #6C757D; margin-top: 0.3rem; }
-  .eq-explain td.chg-note { max-width: 32rem; }
+  .eq-explain { width: 100%; table-layout: fixed; }
+  .eq-explain td.eq-label { width: 22%; white-space: normal; }
+  .eq-explain td.eq-math { width: 42%; }
+  .eq-explain td.chg-note { width: 36%; }
   .eq-explain td.eq-group-title { padding-top: 0.6rem; }
   .nota-table { width: 100%; font-size: 0.95rem; }
   .nota-table td { padding: 0.25rem 0.6rem 0.25rem 0; vertical-align: top;

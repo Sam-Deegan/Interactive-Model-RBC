@@ -698,7 +698,7 @@ B_03_10_qr_src_chr <- T_07_04_qr_fn()
 ###### B_03_11: Version ########################################################
 # Note: Semantic version, shown in the footer; CHANGELOG.md has the history.
 
-B_03_11_version_chr <- "1.0.0"
+B_03_11_version_chr <- "1.0.1"
 
 ###### B_03_12: Source Repository ##############################################
 # Note: The GitHub repo, linked from the footer.
