@@ -698,7 +698,7 @@ B_03_10_qr_src_chr <- T_07_04_qr_fn()
 ###### B_03_11: Version ########################################################
 # Note: Semantic version, shown in the footer; CHANGELOG.md has the history.
 
-B_03_11_version_chr <- "1.0.6"
+B_03_11_version_chr <- "1.0.7"
 
 ###### B_03_12: Source Repository ##############################################
 # Note: The GitHub repo, linked from the footer.
@@ -1224,10 +1224,10 @@ B_04_05_scope_chr <- paste0(
 #   same, so an exported PNG carries it too.
 
 B_04_06_simulated_chr <- paste0(
-  "The sample is SIMULATED from this model at the parameters on the ",
-  "sidebar and then observed with error. It is not data, and nothing here ",
-  "is an estimate of any real economy. The point of a known truth is that ",
-  "the sampler can be held against it, which no real estimation allows."
+  "The sample is simulated from this model at the sidebar parameters and ",
+  "then observed with error. It is not data, and nothing here estimates a ",
+  "real economy. Because the truth is known, the sampler can be checked ",
+  "against it, which no real estimation allows."
 )
 
 #### B_05: The Tests ###########################################################
