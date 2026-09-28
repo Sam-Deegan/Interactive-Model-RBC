@@ -897,6 +897,13 @@ T_07_05_theme_fn <- function() {
 #   headings, tab strips and the site nav. Only theme colours appear here.
 
 T_07_06_css_chr <- "
+  /* Cards and panels are square: they organise the page, not decorate it */
+  .card, .card-header, .card-body, .card-footer, .bslib-card,
+  .bslib-sidebar-layout, .navset-card-tab, .nav-tabs .nav-link,
+  .accordion-item, .accordion-button, .story, .prompt, .problem,
+  .stat-tile, .stat-input input, .btn, .form-control, .form-select,
+  .badge { border-radius: 0 !important; }
+  .card, .bslib-card { box-shadow: none; }
   .stat-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
   .stat-caption { font-size: 0.9rem; color: #6C757D; margin: 0.2rem 0; }
   .stat-slot { flex: 1 1 11rem; display: flex; }
