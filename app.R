@@ -698,7 +698,7 @@ B_03_10_qr_src_chr <- T_07_04_qr_fn()
 ###### B_03_11: Version ########################################################
 # Note: Semantic version, shown in the footer; CHANGELOG.md has the history.
 
-B_03_11_version_chr <- "1.0.1"
+B_03_11_version_chr <- "1.0.2"
 
 ###### B_03_12: Source Repository ##############################################
 # Note: The GitHub repo, linked from the footer.
@@ -1466,7 +1466,7 @@ D_02_01_roots_fn <- function(
     (if (isTRUE(name_on_line_lgl)) {
       guides(colour = "none", linetype = "none")
     }) +
-    labs(title = title_chr, x = x_title, y = y_title) +
+    labs( x = x_title, y = y_title) +
     T_02_01_theme_fn(grid = "h")
 }
 
@@ -1507,7 +1507,6 @@ D_02_02_branch_fn <- function(par, n_horizon_int = 40L) {
       "Other root"     = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
-      title = "Both Solve the Model; Only One Is Stable",
       x = expression(bold("Quarters After the Shock (" * h * ")")),
       y = expression(bold("Output (" * group("|", y[t], "|") * ")"))
     ) +
@@ -1554,7 +1553,6 @@ D_03_01_cycles_fn <- function(sim_df, n_show_int = 200L) {
       Investment  = B_03_01_palette_vec[["third"]])) +
     guides(colour = "none") +
     labs(
-      title = "Investment Varies Most",
       x = expression(bold("Quarter (" * t * ")")),
       y = expression(bold("Per Cent Deviation"))
     ) +
@@ -1607,7 +1605,6 @@ D_03_02_technology_fn <- function(sim_df, ref_df = NULL, n_show_int = 200L) {
       Technology = B_03_01_palette_vec[["second"]])) +
     guides(colour = "none") +
     labs(
-      title = "Output Tracks Technology",
       x = expression(bold("Quarter (" * t * ")")),
       y = expression(bold("Per Cent Deviation"))
     ) +
@@ -1629,7 +1626,6 @@ D_03_03_growth_fn <- function(sim_df, n_show_int = 200L) {
                colour = B_03_01_palette_vec[["zero"]]) +
     geom_line(linewidth = 0.5, colour = B_03_01_palette_vec[["main"]]) +
     labs(
-      title = "Growth Is Close to Unforecastable",
       x = expression(bold("Quarter (" * t * ")")),
       y = expression(bold("Output Growth (" * Delta * y[t] * ")"))
     ) +
@@ -1702,7 +1698,6 @@ D_03_04_irf_panel_fn <- function(irf_df, ref_df, var_vec, colour_vec,
     scale_colour_manual(values = colour_vec) +
     guides(colour = "none") +
     labs(
-      title = title_chr,
       x = expression(bold("Quarters After the Shock (" * h * ")")),
       y = expression(bold("Per Cent Deviation"))
     ) +
@@ -1759,7 +1754,6 @@ D_04_01_bubble_fn <- function(a_num = 0.95, n_periods_int = 40L) {
       "With a bubble" = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
-      title = "Both Satisfy the Same Equation",
       x = expression(bold("Period (" * t * ")")),
       y = expression(bold("Price (" * y[t] * ")"))
     ) +
@@ -1802,7 +1796,6 @@ D_04_02_approx_fn <- function(max_dev_num = 0.6) {
       "Linear" = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
-      title = "The Log-Linear Approximation and Its Error",
       x = expression(bold("Log Deviation, Per Cent (" * 100 * x * ")")),
       y = expression(bold("Level (" * e^x * ")"))
     ) +
@@ -1835,7 +1828,6 @@ D_04_03_ratios_fn <- function(par, sweep_chr = "delta") {
     scale_y_continuous(sec.axis = dup_axis(
       breaks = now_num, labels = sprintf("%.3f", now_num), name = NULL)) +
     labs(
-      title = "The Investment Share Is Implied, Not Chosen",
       x = x_title,
       y = expression(bold("Investment Share (" * s[i] * ")"))
     ) +
@@ -1906,9 +1898,6 @@ D_05_01_priors_fn <- function(n_point_int = 601L) {
     scale_y_continuous(expand = expansion(mult = c(0.02, 0.20))) +
     guides(colour = "none") +
     labs(
-      title = "The Parameter's Range Picks the Prior Family",
-      subtitle = paste0("Shaded: the range the parameter is allowed to ",
-                        "take. Drawn, not estimated."),
       x = expression(bold("Parameter Value (" * theta * ")")),
       y = expression(bold("Prior Density (" * p(theta) * ")"))
     ) +
@@ -2003,9 +1992,6 @@ D_05_02_trace_fn <- function(chain_lst) {
     scale_colour_manual(values = colour_vec) +
     guides(colour = "none") +
     labs(
-      title = title_chr,
-      subtitle = paste0("SIMULATED sample from this model. The dotted rule ",
-                        "is the persistence it was drawn at."),
       x = expression(bold("Iteration (s)")),
       y = expression(bold("Persistence (" * rho * ")"))
     ) +
@@ -2098,9 +2084,6 @@ D_05_03_posterior_fn <- function(dens_df, prior_lst, chain_lst) {
                                      Posterior = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
-      title = "What the Sample Did to One Prior",
-      subtitle = paste0("SIMULATED sample from this model, not data from ",
-                        "any economy."),
       x = expression(bold("Persistence (" * rho * ")")),
       y = expression(bold("Density (" * p(rho) * ")"))
     ) +
