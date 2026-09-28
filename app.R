@@ -24,7 +24,7 @@
 ##   Stage 2.4b estimates one parameter of this model from a sample drawn
 ##   from this model. Nothing in the app is an estimate of a real economy.
 ##   All text (worked examples, prompts, equations, notation) lives in B_02
-##   and B_04. Every figure carries Save PNG and Save PDF at deck size.
+##   and B_04. Every figure carries Save PNG at deck size.
 ##
 ## Inputs:
 ##   R/model.R (the solver, simulator, filter and sampler) and R/toolkit.R
@@ -698,7 +698,7 @@ B_03_10_qr_src_chr <- T_07_04_qr_fn()
 ###### B_03_11: Version ########################################################
 # Note: Semantic version, shown in the footer; CHANGELOG.md has the history.
 
-B_03_11_version_chr <- "1.0.5"
+B_03_11_version_chr <- "1.0.6"
 
 ###### B_03_12: Source Repository ##############################################
 # Note: The GitHub repo, linked from the footer.
@@ -2544,7 +2544,7 @@ F_01_01_server <- function(input, output, session) {
     })
   }
 
-  ###### F_04_02: Save PNG and Save PDF Under Every Figure #####################
+  ###### F_04_02: Save PNG Under Every Figure #################################
   # Note: T_07_07h_exports_fn at deck size, named rbc-<stage>-<figure>; the
   #   two impulse-response panels are written at the pair size.
 

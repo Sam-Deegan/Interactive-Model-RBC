@@ -8,7 +8,7 @@ for ECON42240 Advanced Macroeconomics, University College Dublin.
 **Try it in the browser (nothing to install):**
 https://sam-deegan.com/toy-models/rbc/
 
-Current version: **1.0.5** (see [CHANGELOG.md](CHANGELOG.md)). The version
+Current version: **1.0.6** (see [CHANGELOG.md](CHANGELOG.md)). The version
 is shown in the app footer; releases are tagged `vX.Y.Z`.
 
 ## What it does
@@ -36,7 +36,7 @@ beside it for an exact value, and the loaded example's figures stay on screen
 as faded ghosts while the sliders move. The Equations, Notation and In Words
 tabs show the model as it stands at the chosen stage and flag what that stage
 changed; the Tests and Diagnostics tabs report the scorecard and the root
-count live. Every figure carries Save PNG and Save PDF at slide size. Periods
+count live. Every figure carries Save PNG at slide size. Periods
 are quarters.
 
 **Stage 8 is estimation on simulated data, not on any economy.** The sample
@@ -114,7 +114,7 @@ known ρ from a simulated sample, a tight prior returning itself, and the
 drawn prior densities against their exact masses. `V_09` and `V_10` check the
 app around the model: the export shapes, the equation and notation lists
 closing over each other, the page frame, every stage's panels through
-`shiny::testServer`, and every Save PNG and Save PDF handler.
+`shiny::testServer`, and every Save PNG handler.
 
 ## The model
 

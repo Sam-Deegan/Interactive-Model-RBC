@@ -904,7 +904,8 @@ T_07_06_css_chr <- "
   .stat-tile, .stat-input input, .btn, .form-control, .form-select,
   .badge { border-radius: 0 !important; }
   .card, .bslib-card { border: none; box-shadow: none; }
-  .card-header { border-bottom: none; background: transparent; }
+  .card-header { border-bottom: none; background: transparent;
+    color: #0056A4; font-weight: 700; }
   .card-footer { border-top: none; background: transparent; }
   .stat-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
   .stat-caption { font-size: 0.9rem; color: #6C757D; margin: 0.2rem 0; }
@@ -1161,8 +1162,8 @@ T_07_07e_add_fn <- function(id) {
 }
 
 ###### T_07_07f: A Figure Card With Its Own Exports ############################
-# Note: A card holding one figure at 2:1, its lifted caption, and Save PNG
-#   and Save PDF buttons that write it at deck size via T_07_07h_exports_fn.
+# Note: A card holding one figure at 2:1, its lifted caption, and a Save PNG
+#   button that writes it at deck size via T_07_07h_exports_fn.
 
 T_07_07f_figcard_fn <- function(id, title, height = "320px") {
   T_07_07e_add_fn(id)
@@ -1175,8 +1176,6 @@ T_07_07f_figcard_fn <- function(id, title, height = "320px") {
     shiny::tags$div(
       class = "fig-dl",
       shiny::downloadButton(paste0(id, "__png"), "Save PNG",
-                            class = "btn btn-sm btn-outline-secondary"),
-      shiny::downloadButton(paste0(id, "__pdf"), "Save PDF",
                             class = "btn btn-sm btn-outline-secondary")
     )
   )
@@ -1205,18 +1204,13 @@ T_07_07g_pair_fn <- function(...) {
 T_07_07h_exports_fn <- function(output, id, plot_fn, stem, pair = FALSE,
                                 legend = FALSE) {
   stem_fn <- if (is.function(stem)) stem else function() stem
-  for (ext in c("png", "pdf")) {
-    local({
-      this_ext <- ext
-      output[[paste0(id, "__", this_ext)]] <- shiny::downloadHandler(
-        filename = function() paste0(stem_fn(), ".", this_ext),
-        content = function(file) {
-          T_02_03c_export_fn(file, plot_fn(), pair = pair,
-                             format = this_ext, legend = legend)
-        }
-      )
-    })
-  }
+  output[[paste0(id, "__png")]] <- shiny::downloadHandler(
+    filename = function() paste0(stem_fn(), ".png"),
+    content = function(file) {
+      T_02_03c_export_fn(file, plot_fn(), pair = pair, format = "png",
+                         legend = legend)
+    }
+  )
   invisible(id)
 }
 
