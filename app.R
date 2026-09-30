@@ -563,8 +563,8 @@ B_03_01_palette_vec <- c(
 #   figure, pair one half of a figure pair. Both are T_02_03c_export_fn's.
 
 B_03_02_shape_lst <- list(
-  wide = list(width_px = 1600L, height_px = 800L),
-  pair = list(width_px = 1440L, height_px = 720L)
+  wide = list(width_px = 1500L, height_px = 1000L),
+  pair = list(width_px = 1440L, height_px = 960L)
 )
 
 ###### B_03_03: The Floor on the Aspect Ratio ##################################
@@ -698,7 +698,7 @@ B_03_10_qr_src_chr <- T_07_04_qr_fn()
 ###### B_03_11: Version ########################################################
 # Note: Semantic version, shown in the footer; CHANGELOG.md has the history.
 
-B_03_11_version_chr <- "1.0.7"
+B_03_11_version_chr <- "1.0.8"
 
 ###### B_03_12: Source Repository ##############################################
 # Note: The GitHub repo, linked from the footer.
@@ -1355,9 +1355,10 @@ D_01_03a_figstem_fn <- function(id_chr, stage_chr) {
 # Note: On screen the plot title is dropped (the card header names the
 #   figure) and the subtitle becomes the caption, which T_02_01c_draw_fn
 #   lifts into the note under the card. A title carrying a live verdict is
-#   kept as the caption's first sentence. Drawn at 96 dpi.
+#   kept as the caption's first sentence. Drawn at 72 dpi, as every other
+#   app draws.
 
-D_01_04_res_int <- 96L
+D_01_04_res_int <- 72L
 
 D_01_04_screen_fn <- function(plot_obj, title_to_caption = FALSE) {
   if (!inherits(plot_obj, "ggplot")) return(plot_obj)
@@ -1466,7 +1467,7 @@ D_02_01_roots_fn <- function(
     (if (isTRUE(name_on_line_lgl)) {
       guides(colour = "none", linetype = "none")
     }) +
-    labs( x = x_title, y = y_title) +
+    labs(title = title_chr, x = x_title, y = y_title) +
     T_02_01_theme_fn(grid = "h")
 }
 
@@ -1507,6 +1508,7 @@ D_02_02_branch_fn <- function(par, n_horizon_int = 40L) {
       "Other root"     = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
+      title = "Both Solve the Model; Only One Is Stable",
       x = expression(bold("Quarters After the Shock (" * h * ")")),
       y = expression(bold("Output (" * group("|", y[t], "|") * ")"))
     ) +
@@ -1553,6 +1555,7 @@ D_03_01_cycles_fn <- function(sim_df, n_show_int = 200L) {
       Investment  = B_03_01_palette_vec[["third"]])) +
     guides(colour = "none") +
     labs(
+      title = "Investment Varies Most",
       x = expression(bold("Quarter (" * t * ")")),
       y = expression(bold("Per Cent Deviation"))
     ) +
@@ -1605,6 +1608,7 @@ D_03_02_technology_fn <- function(sim_df, ref_df = NULL, n_show_int = 200L) {
       Technology = B_03_01_palette_vec[["second"]])) +
     guides(colour = "none") +
     labs(
+      title = "Output Tracks Technology",
       x = expression(bold("Quarter (" * t * ")")),
       y = expression(bold("Per Cent Deviation"))
     ) +
@@ -1626,6 +1630,7 @@ D_03_03_growth_fn <- function(sim_df, n_show_int = 200L) {
                colour = B_03_01_palette_vec[["zero"]]) +
     geom_line(linewidth = 0.5, colour = B_03_01_palette_vec[["main"]]) +
     labs(
+      title = "Growth Is Close to Unforecastable",
       x = expression(bold("Quarter (" * t * ")")),
       y = expression(bold("Output Growth (" * Delta * y[t] * ")"))
     ) +
@@ -1698,6 +1703,7 @@ D_03_04_irf_panel_fn <- function(irf_df, ref_df, var_vec, colour_vec,
     scale_colour_manual(values = colour_vec) +
     guides(colour = "none") +
     labs(
+      title = title_chr,
       x = expression(bold("Quarters After the Shock (" * h * ")")),
       y = expression(bold("Per Cent Deviation"))
     ) +
@@ -1754,6 +1760,7 @@ D_04_01_bubble_fn <- function(a_num = 0.95, n_periods_int = 40L) {
       "With a bubble" = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
+      title = "Both Satisfy the Same Equation",
       x = expression(bold("Period (" * t * ")")),
       y = expression(bold("Price (" * y[t] * ")"))
     ) +
@@ -1796,6 +1803,7 @@ D_04_02_approx_fn <- function(max_dev_num = 0.6) {
       "Linear" = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
+      title = "The Log-Linear Approximation and Its Error",
       x = expression(bold("Log Deviation, Per Cent (" * 100 * x * ")")),
       y = expression(bold("Level (" * e^x * ")"))
     ) +
@@ -1828,6 +1836,7 @@ D_04_03_ratios_fn <- function(par, sweep_chr = "delta") {
     scale_y_continuous(sec.axis = dup_axis(
       breaks = now_num, labels = sprintf("%.3f", now_num), name = NULL)) +
     labs(
+      title = "The Investment Share Is Implied, Not Chosen",
       x = x_title,
       y = expression(bold("Investment Share (" * s[i] * ")"))
     ) +
@@ -1898,6 +1907,9 @@ D_05_01_priors_fn <- function(n_point_int = 601L) {
     scale_y_continuous(expand = expansion(mult = c(0.02, 0.20))) +
     guides(colour = "none") +
     labs(
+      title = "The Parameter's Range Picks the Prior Family",
+      subtitle = paste0("Shaded: the range the parameter is allowed to ",
+                        "take. Drawn, not estimated."),
       x = expression(bold("Parameter Value (" * theta * ")")),
       y = expression(bold("Prior Density (" * p(theta) * ")"))
     ) +
@@ -1992,6 +2004,9 @@ D_05_02_trace_fn <- function(chain_lst) {
     scale_colour_manual(values = colour_vec) +
     guides(colour = "none") +
     labs(
+      title = title_chr,
+      subtitle = paste0("SIMULATED sample from this model. The dotted rule ",
+                        "is the persistence it was drawn at."),
       x = expression(bold("Iteration (s)")),
       y = expression(bold("Persistence (" * rho * ")"))
     ) +
@@ -2084,6 +2099,9 @@ D_05_03_posterior_fn <- function(dens_df, prior_lst, chain_lst) {
                                      Posterior = "solid")) +
     guides(colour = "none", linetype = "none") +
     labs(
+      title = "What the Sample Did to One Prior",
+      subtitle = paste0("SIMULATED sample from this model, not data from ",
+                        "any economy."),
       x = expression(bold("Persistence (" * rho * ")")),
       y = expression(bold("Density (" * p(rho) * ")"))
     ) +
@@ -2117,7 +2135,7 @@ E_01_01_ctl_fn <- function(id_chr) {
 E_01_02_sidebar_lst <- sidebar(
   width = 380,
   radioButtons("stage", "Stage of the Model", choices = B_02_01_stage_vec,
-               selected = "2.1c"),
+               selected = "1.1a"),
   T_03_05_note_fn(B_04_05_scope_chr),
   accordion(
     open = c("The Model", "The Estimation"),
@@ -2212,9 +2230,9 @@ E_02_03_figures_lst <- tagList(
 E_02_04_ui <- tagList(
   T_07_08b_nav_fn(),
   page_sidebar(
-    title        = T_07_09_title_fn("The RBC Model, Solved and Simulated",
+    title        = T_07_09_title_fn("Real Business Cycle (RBC) Model",
                                     B_03_10_qr_src_chr),
-    window_title = paste("The RBC Model -", T_07_01_author_chr),
+    window_title = paste("Real Business Cycle Model -", T_07_01_author_chr),
     fillable     = FALSE,
     theme        = T_07_05_theme_fn(),
     sidebar      = E_01_02_sidebar_lst,
@@ -2565,7 +2583,8 @@ F_01_01_server <- function(input, output, session) {
 
   F_04_03_note_fn <- function(id_chr, ...) {
     store <- T_02_01d_capstore_fn()
-    cap_chr <- if (is.null(store)) NULL else store[[id_chr]]
+    lab_lst <- if (is.null(store)) NULL else store[[id_chr]]
+    cap_chr <- if (is.list(lab_lst)) lab_lst$cap else lab_lst
     tagList(
       if (!is.null(cap_chr) && nzchar(cap_chr)) tags$p(cap_chr),
       tags$p(HTML(paste0(...))))

@@ -42,7 +42,7 @@
 ##   V_09, V_10    the app around the model: the export shapes, the equation
 ##                 and notation lists closing over each other, the page frame,
 ##                 every stage's panels through testServer, and every Save
-##                 PNG and Save PDF handler
+##                 PNG handler
 ##
 ## References:
 ##   Whelan, K. MA Advanced Macroeconomics, part 7 (the real business cycle
@@ -962,12 +962,17 @@ local({
                 toupper(B_03_01_palette_vec[["compare"]])),
     toupper(B_03_01_palette_vec[["compare"]]))
 
-  # a PDF through the same export function, at the pair shape
-  pdf_chr <- file.path(tempdir(), "rbc-verify.pdf")
-  D_01_01_export_fn(plot_lst$irf, pdf_chr, "pair", "pdf")
-  head_chr <- rawToChar(readBin(pdf_chr, "raw", n = 4L))
-  V_01_03_check_fn("Save PDF writes a PDF through T_02_03c_export_fn",
-                   identical(head_chr, "%PDF"), basename(pdf_chr))
+  # a PNG through the same export function, at the pair shape: 3:2, at the
+  # pair panel's declared pixel size
+  png_chr <- file.path(tempdir(), "rbc-verify.png")
+  D_01_01_export_fn(plot_lst$irf, png_chr, "pair", "png")
+  dim_vec <- V_09_02_pngdim_fn(png_chr)
+  want_vec <- c(B_03_02_shape_lst$pair$width_px,
+                B_03_02_shape_lst$pair$height_px)
+  V_01_03_check_fn("the pair export through T_02_03c_export_fn is 3:2",
+                   all(abs(dim_vec - want_vec) <= 1),
+                   sprintf("%d x %d px", dim_vec[["width"]],
+                           dim_vec[["height"]]))
 })
 
 ###### V_09_13: The eta Preset's Wording #######################################
@@ -984,9 +989,9 @@ local({
 
 ###### V_09_14: The Page Frame #################################################
 # Note: The UI rendered to HTML once: every plotOutput sits in a toolkit
-#   figure card (T_07_07f_figcard_fn), every card carries Save PNG and Save
-#   PDF, no local CSS class remains, and no control label or card header
-#   spells a Greek letter out.
+#   figure card (T_07_07f_figcard_fn), every card carries a Save PNG button
+#   in its header, no local CSS class remains, and no control label or card
+#   header spells a Greek letter out.
 
 local({
   html_chr <- tryCatch(htmltools::renderTags(E_02_04_ui)$html,
@@ -1016,10 +1021,9 @@ local({
     sprintf("%d plot(s), %d card(s)", length(plot_vec), length(in_card_vec)))
 
   btn_ok_lgl <- vapply(names(B_03_05_figfile_lst), function(id_chr) {
-    grepl(sprintf('id="%s__png"', id_chr), html_chr, fixed = TRUE) &&
-      grepl(sprintf('id="%s__pdf"', id_chr), html_chr, fixed = TRUE)
+    grepl(sprintf('id="%s__png"', id_chr), html_chr, fixed = TRUE)
   }, TRUE)
-  V_01_03_check_fn("every figure card carries Save PNG and Save PDF buttons",
+  V_01_03_check_fn("every figure card carries a Save PNG button",
                    all(btn_ok_lgl),
                    if (all(btn_ok_lgl)) "all fourteen" else
                      paste(names(btn_ok_lgl)[!btn_ok_lgl], collapse = ", "))
@@ -1132,7 +1136,7 @@ local({
 # Note: Each file is copied out of testServer's temporary directory before it
 #   is read. The stage is set to the figure's own, since the name carries it.
 #   Every file exists, is the declared pixel size and has the name D_01_03
-#   builds; every PDF exists and starts with %PDF.
+#   builds. The app exports PNG only.
 
 V_10_03_stage_lst <- list(
   plot_persistence = "1.1a", plot_bubble = "1.5a",
@@ -1148,7 +1152,7 @@ V_10_03_keep_dir <- file.path(tempdir(), "rbc-verify-downloads")
 dir.create(V_10_03_keep_dir, showWarnings = FALSE, recursive = TRUE)
 
 local({
-  got_lst <- pdf_lst <- list()
+  got_lst <- list()
   shiny::testServer(F_01_01_server, {
     for (id_chr in names(V_10_03_stage_lst)) {
       do.call(session$setInputs, V_10_01_input_lst)
@@ -1157,27 +1161,8 @@ local({
       dst_chr <- file.path(V_10_03_keep_dir, basename(src_chr))
       file.copy(src_chr, dst_chr, overwrite = TRUE)
       got_lst[[id_chr]] <<- dst_chr
-      pdf_src_chr <- output[[paste0(id_chr, "__pdf")]]
-      pdf_dst_chr <- file.path(V_10_03_keep_dir, basename(pdf_src_chr))
-      file.copy(pdf_src_chr, pdf_dst_chr, overwrite = TRUE)
-      pdf_lst[[id_chr]] <<- pdf_dst_chr
     }
   })
-
-  # Save PDF: the file exists, is a PDF, and carries the same name
-  pdf_vec  <- unlist(pdf_lst)
-  pdf_ok   <- vapply(pdf_vec, function(f_chr) {
-    file.exists(f_chr) && file.info(f_chr)$size > 0 &&
-      identical(rawToChar(readBin(f_chr, "raw", n = 4L)), "%PDF")
-  }, TRUE)
-  pdf_name <- vapply(names(pdf_lst), function(k_chr) {
-    D_01_03_figfile_fn(k_chr, V_10_03_stage_lst[[k_chr]], "pdf")
-  }, "")
-  V_01_03_check_fn(
-    "every Save PDF handler writes a named PDF",
-    length(pdf_vec) == length(V_10_03_stage_lst) && all(pdf_ok) &&
-      all(basename(pdf_vec) == pdf_name),
-    sprintf("%d file(s), e.g. %s", length(pdf_vec), basename(pdf_vec[[1]])))
 
   id_vec   <- names(got_lst)
   path_vec <- unlist(got_lst)

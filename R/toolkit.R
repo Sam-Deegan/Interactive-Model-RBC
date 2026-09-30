@@ -99,10 +99,13 @@ T_01_04_ghost_alpha_num <- 0.5
 #   muted tick labels, legend along the bottom. grid is "h", "v" or "none".
 
 T_02_01_theme_fn <- function(base_size = T_01_03_base_size_int,
-                             grid = c("h", "v", "none")) {
+                             grid = c("h", "v", "none"), ratio = 2 / 3) {
   grid <- match.arg(grid)
   ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(
+      # Every figure is 3:2 whatever box it is drawn in (CONVENTIONS.md 6);
+      #   ratio = NULL lets a faceted or very tall figure set its own
+      aspect.ratio       = ratio,
       panel.background   = ggplot2::element_rect(
         fill = "white", colour = NA),
       plot.background    = ggplot2::element_rect(
@@ -136,14 +139,10 @@ T_02_01_theme_fn <- function(base_size = T_01_03_base_size_int,
         fill = "white", colour = NA),
       strip.text         = ggplot2::element_text(
         colour = T_01_01_palette_vec[["navy"]], face = "bold", hjust = 0),
-      # Title flush with the plot edge, not the panel
-      plot.title.position = "plot",
-      plot.title         = ggplot2::element_text(
-        colour = T_01_01_palette_vec[["navy"]], face = "bold", hjust = 0,
-        size = ggplot2::rel(1)),
-      plot.subtitle      = ggplot2::element_text(
-        colour = T_01_01_palette_vec[["muted"]], size = ggplot2::rel(0.85)),
-      # Captions are drawn under the card by T_02_01c_draw_fn, not here
+      # Title, subtitle and caption are drawn on the page around the card
+      #   by T_02_01c_draw_fn, never inside the image (CONVENTIONS.md 6)
+      plot.title         = ggplot2::element_blank(),
+      plot.subtitle      = ggplot2::element_blank(),
       plot.caption       = ggplot2::element_blank(),
       # Axis titles at subtitle size, bold: "Inflation (pi[t])"
       axis.title         = ggplot2::element_text(
@@ -176,20 +175,27 @@ T_02_01b_fold_fn <- function(txt, width) {
 }
 
 ###### T_02_01c: Draw a Plot ###################################################
-# Note: The last step for every figure. Folds the title and moves the caption
-#   into the store in T_02_01d, keyed by output id, for T_07_07d_cap_fn.
+# Note: The last step for every figure. Lifts the title, subtitle and caption
+#   out of the plot into the store in T_02_01d, keyed by output id, so that
+#   T_07_07d_cap_fn can print them on the page: the title in the card
+#   header, the subtitle above the figure, the caption under it.
 
 T_02_01c_draw_fn <- function(p, cap_width = 95, title_width = 60) {
   if (!inherits(p, "ggplot")) return(p)
-  p$labels$title <- T_02_01b_fold_fn(p$labels$title, title_width)
-
-  cap <- p$labels$caption
-  id  <- tryCatch(shiny::getCurrentOutputInfo()$name, error = function(e) NULL)
+  txt_fn <- function(x) {
+    if (is.null(x) || !is.character(x) || !nzchar(x)) return("")
+    gsub("\n", " ", x)
+  }
+  id <- tryCatch(shiny::getCurrentOutputInfo()$name, error = function(e) NULL)
   if (!is.null(id)) {
     store <- T_02_01d_capstore_fn()
     if (!is.null(store)) {
-      store[[id]] <- if (is.null(cap) || !nzchar(cap)) "" else cap
-      p$labels$caption <- NULL
+      store[[id]] <- list(title    = txt_fn(p$labels$title),
+                          subtitle = txt_fn(p$labels$subtitle),
+                          cap      = txt_fn(p$labels$caption))
+      p$labels$title    <- NULL
+      p$labels$subtitle <- NULL
+      p$labels$caption  <- NULL
     }
   }
   p
@@ -333,21 +339,23 @@ T_02_03b_slide_fn <- function(plot, legend = FALSE) {
 }
 
 ###### T_02_03c: Export a Figure at Deck Size ##################################
-# Note: Writes PNG or PDF at the deck's 2:1 shape, 4 x 2 inches or 3.6 x 1.8
+# Note: Writes the PNG at 3:2 (CONVENTIONS.md 6), 4.5 x 3 inches or 3.6 x 2.4
 #   for a pair panel, scaled by 14/11 so type lands at the deck's size.
 
 T_02_03c_export_fn <- function(file, plot, pair = FALSE, format = "png",
                                legend = FALSE) {
   scale_num <- T_01_03_base_size_int / 11
-  width_num <- (if (pair) 3.6 else 4.0) * scale_num
-  height_num <- width_num / 2
-  px_num <- if (pair) 1440 else 1600
+  width_num <- (if (pair) 3.6 else 4.5) * scale_num
+  height_num <- width_num * 2 / 3
+  px_num <- if (pair) 1440 else 1500
   slide_plt <- T_02_03b_slide_fn(plot, legend = legend)
   if (identical(format, "pdf")) {
     ggplot2::ggsave(file, slide_plt, width = width_num, height = height_num,
                     device = grDevices::cairo_pdf)
   } else {
-    ggplot2::ggsave(file, slide_plt, width = width_num, height = height_num,
+    # Pixel units, so the file is exactly px_num wide whatever the dpi
+    ggplot2::ggsave(file, slide_plt, width = px_num,
+                    height = round(px_num * 2 / 3), units = "px",
                     dpi = px_num / width_num, device = "png", bg = "white")
   }
   invisible(file)
@@ -907,14 +915,18 @@ T_07_06_css_chr <- "
   .card-header { border-bottom: none; background: transparent;
     color: #0056A4; font-weight: 700; }
   .card-footer { border-top: none; background: transparent; }
+  /* Headings take the body line height of 1.5; tighten them. */
+  h1, h2, h3, h4, h5, h6,
+  .bslib-page-title, .card-header { line-height: 1.2; }
+  .bslib-page-title { line-height: 1.15; letter-spacing: -0.01em; }
   .stat-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-  .stat-caption { font-size: 0.9rem; color: #6C757D; margin: 0.2rem 0; }
+  .stat-caption { font-size: 0.8rem; color: #6C757D; margin: 0.2rem 0; }
   .stat-slot { flex: 1 1 11rem; display: flex; }
   .stat-slot > * { flex: 1 1 auto; }
   .stat-input .form-group { margin-bottom: 0; }
   .stat-input input { font-size: 1.35rem; font-weight: 600; color: #04204C;
     padding: 0.05rem 0.4rem; border: 1px solid #D8E0E6; background: #FFFFFF; }
-  .stat-hint { font-size: 0.85rem; color: #6C757D; font-style: italic; }
+  .stat-hint { font-size: 0.72rem; color: #6C757D; font-style: italic; }
   .side-qr { flex: 0 0 auto; }
   .side-qr img { width: 56px; height: 56px; display: block; }
   .sidebar-qr { text-align: center; margin-top: 1rem; font-size: 0.8rem; }
@@ -929,12 +941,12 @@ T_07_06_css_chr <- "
     padding: 0.45rem 0.8rem; background: #F2F6F9; }
   .stat-tile.good { border-left-color: #61B77C; }
   .stat-tile.bad  { border-left-color: #04204C; }
-  .stat-label { font-size: 0.9rem; color: #6C757D; }
+  .stat-label { font-size: 0.8rem; color: #6C757D; }
   .stat-value { font-size: 1.5rem; font-weight: 600; color: #04204C; }
-  .stat-note  { font-size: 0.9rem; color: #212529; }
+  .stat-note  { font-size: 0.78rem; color: #212529; }
   .eq-table td { padding: 0.15rem 0.9rem 0.15rem 0; vertical-align: middle;
     border-bottom: 1px solid #F2F6F9; }
-  .eq-label { color: #6C757D; font-size: 0.95rem; white-space: nowrap; }
+  .eq-label { color: #6C757D; font-size: 0.85rem; white-space: nowrap; }
   .eq-math { width: 100%; font-size: 92%; }
   .eq-group { overflow-x: auto; }
   .eq-group-title { font-weight: 700; color: #04204C; font-size: 0.9rem;
@@ -944,42 +956,42 @@ T_07_06_css_chr <- "
     padding: 0.05rem 0.35rem; border-radius: 3px; margin-left: 0.35rem; }
   .eq-new     { background: #61B77C; }
   .eq-changed { background: #0056A4; }
-  .eq-legend  { font-size: 0.88rem; color: #6C757D; margin-top: 0.3rem; }
+  .eq-legend  { font-size: 0.78rem; color: #6C757D; margin-top: 0.3rem; }
   .eq-explain { width: 100%; table-layout: fixed; }
   .eq-explain td.eq-label { width: 22%; white-space: normal; }
   .eq-explain td.eq-math { width: 42%; }
   .eq-explain td.chg-note { width: 36%; }
   .eq-explain td.eq-group-title { padding-top: 0.6rem; }
-  .nota-table { width: 100%; font-size: 0.95rem; }
+  .nota-table { width: 100%; font-size: 0.88rem; }
   .nota-table td { padding: 0.25rem 0.6rem 0.25rem 0; vertical-align: top;
     border-bottom: 1px solid #F2F6F9; }
   .nota-table td:first-child { white-space: nowrap; width: 6.5rem; }
-  .chg-was  { color: #6C757D; font-size: 0.92rem; }
-  .chg-note { font-size: 0.92rem; }
+  .chg-was  { color: #6C757D; font-size: 0.85rem; }
+  .chg-note { font-size: 0.85rem; }
   .prompt { background: #F2F6F9; border-left: 4px solid #61B77C;
     padding: 0.6rem 0.9rem; border-radius: 4px; font-size: 0.95rem; }
   .problem { background: #F2F6F9; border-left: 4px solid #04204C;
     padding: 0.6rem 0.9rem; border-radius: 4px; }
-  .story { background: #F2F6F9; border-radius: 4px; font-size: 0.95rem;
+  .story { background: #F2F6F9; border-radius: 4px; font-size: 0.86rem;
     padding: 0.55rem 0.75rem; margin: -0.4rem 0 0.7rem 0; }
   .story-key { font-weight: 700; color: #04204C; margin-top: 0.45rem; }
   .story dl { margin: 0.2rem 0 0 0; }
   .story dt { font-weight: 600; color: #0056A4; }
   .story dd { margin: 0 0 0.3rem 0; }
   .narrative { border: 1px solid #D8E0E6; border-left: 4px solid #61B77C;
-    border-radius: 4px; padding: 0.55rem 0.75rem; font-size: 0.95rem;
+    border-radius: 4px; padding: 0.55rem 0.75rem; font-size: 0.88rem;
     margin-bottom: 0.7rem; background: #FFFFFF; }
   .nar-head { font-weight: 700; color: #04204C; margin-bottom: 0.2rem; }
-  .nar-source { font-size: 0.92em; color: #6C757D; margin-top: 0.5rem; }
+  .nar-source { font-size: 0.86em; color: #6C757D; margin-top: 0.5rem; }
   .ctl { margin-bottom: 0.4rem; }
-  .ctl-label { font-size: 0.95rem; font-weight: 600; color: #0056A4;
+  .ctl-label { font-size: 0.88rem; font-weight: 600; color: #0056A4;
     margin-bottom: -0.25rem; }
   .ctl-help { color: #0056A4; cursor: help; font-size: 0.85rem; }
   .ctl-row { display: flex; gap: 0.5rem; align-items: center; }
   .ctl-slider { flex: 1 1 auto; min-width: 0; }
   .ctl-box { flex: 0 0 4.9rem; }
   .ctl .form-group { margin-bottom: 0; }
-  .ctl-box input { padding: 0.15rem 0.35rem; font-size: 0.9rem;
+  .ctl-box input { padding: 0.15rem 0.35rem; font-size: 0.85rem;
     text-align: right; }
   .sidebar .accordion-button { font-weight: 700; color: #04204C; }
   .sidebar h6 { color: #04204C; font-weight: 700; margin-top: 0.5rem; }
@@ -1023,13 +1035,38 @@ T_07_06_css_chr <- "
     font-size: 0.95rem; margin-bottom: 0.35rem; }
   #stage .radio label, #stage .shiny-options-group label { font-weight: 400;
     color: #212529; }
-  .ctl-note { font-size: 0.88rem; color: #6C757D; line-height: 1.45;
+  .ctl-note { font-size: 0.78rem; color: #6C757D; line-height: 1.45;
     margin: 0.15rem 0 0.1rem 0; }
   .fig-head { display: flex; align-items: center; gap: 0.5rem; }
-  .fig-note { color: #6C757D; font-size: 0.92rem; line-height: 1.45;
+  .fig-note { color: #6C757D; font-size: 0.82rem; line-height: 1.45;
     padding: 0.15rem 0.15rem 0 0.15rem; }
   .fig-note p { margin: 0; }
-  .fig-save { margin-left: auto; border: 1px solid #D8E0E6; background: #FFFFFF;
+  .fig-sub { color: #6C757D; font-size: 0.85rem; line-height: 1.4;
+    padding: 0 1rem; }
+  .fig-sub p { margin: 0 0 0.3rem; }
+  /* The plot box is 3:2 whatever its width; the fixed height is a fallback */
+  @supports (aspect-ratio: 3 / 2) {
+    .fig-r32 > .shiny-plot-output { height: auto !important;
+      aspect-ratio: 3 / 2; min-height: 0; overflow: hidden; }
+  }
+  /* The equations card: name and tabs on one line, no rule for a tab to cut */
+  .bslib-navs-card-title { display: flex; align-items: center; gap: 1rem;
+    flex-wrap: wrap; }
+  .bslib-navs-card-title .nav-tabs { border-bottom: none; margin: 0; }
+  .nav-tabs .nav-link { margin-bottom: 0; }
+  /* The stage name is the first tab: selected while the card is folded */
+  .eq-stage { padding: 0.5rem 1rem; cursor: pointer; font-weight: 600;
+    color: #0056A4; }
+  .eq-stage:hover { background: #F2F6F9; }
+  .eq-folded > .bslib-navs-card-title > .eq-stage { background: #0056A4;
+    color: #FFFFFF; font-weight: 700; }
+  .eq-folded > .tab-content { display: none; }
+  .eq-folded .nav-tabs .nav-link.active { background: transparent;
+    color: #6C757D; border-color: transparent; }
+  .eq-folded .nav-tabs .nav-link.active:hover { color: #0056A4;
+    background: #F2F6F9; }
+  .fig-save { margin-left: auto; flex: 0 0 auto; white-space: nowrap;
+    border: 1px solid #D8E0E6; background: #FFFFFF;
     color: #0056A4; font-size: 0.72rem; font-weight: 600; border-radius: 3px;
     padding: 0.1rem 0.5rem; cursor: pointer; line-height: 1.5;
     transition: background 0.2s ease, color 0.2s ease; }
@@ -1097,12 +1134,45 @@ T_07_07b_save_js_chr <- paste(
   sep = "\n"
 )
 
+###### T_07_07b2: Fold the Equations Card #####################################
+# Note: The equations card opens folded, so the figures sit high on the
+#   page, with the stage name drawn as the selected tab. Clicking a tab
+#   opens it; clicking the open tab again, or the stage name, folds it.
+
+T_07_07b2_eqfold_js_chr <- paste(
+  "document.addEventListener('DOMContentLoaded', function () {",
+  "  document.querySelectorAll('.card > .bslib-navs-card-title')",
+  "    .forEach(function (hdr) {",
+  "      var card = hdr.parentElement;",
+  "      card.classList.add('eq-folded');",
+  "      var name = hdr.querySelector(':scope > :not(.nav)');",
+  "      if (name) {",
+  "        name.classList.add('eq-stage');",
+  "        name.addEventListener('click', function () {",
+  "          card.classList.add('eq-folded');",
+  "        });",
+  "      }",
+  "      hdr.querySelectorAll('.nav-link').forEach(function (a) {",
+  "        a.addEventListener('click', function () {",
+  "          var open = !card.classList.contains('eq-folded');",
+  "          if (open && a.classList.contains('active')) {",
+  "            card.classList.add('eq-folded');",
+  "          } else {",
+  "            card.classList.remove('eq-folded');",
+  "          }",
+  "        }, true);",
+  "      });",
+  "    });",
+  "});",
+  sep = "\n"
+)
+
 ###### T_07_07c: Figure Card ###################################################
 # Note: A card holding one figure, with a Save PNG button in its header. Use
 #   in place of card(card_header(title), plotOutput(id, height)).
 
 T_07_07c_figcard_fn <- function(id, title, height, file = NULL) {
-  T_07_07e_add_fn(id)
+  T_07_07e_add_fn(id, title)
   stem <- if (is.null(file)) {
     gsub("(^-|-$)", "",
          gsub("-+", "-", gsub("[^a-z0-9]+", "-", tolower(title))))
@@ -1113,31 +1183,50 @@ T_07_07c_figcard_fn <- function(id, title, height, file = NULL) {
     bslib::card_header(
       shiny::tags$div(
         class = "fig-head",
-        shiny::tags$span(title),
+        shiny::uiOutput(paste0(id, "__ttl"), inline = TRUE),
         shiny::tags$button(type = "button", class = "fig-save",
                            `data-plot` = id, `data-name` = stem,
                            title = "Save this figure as a PNG",
                            "Save PNG")
       )
     ),
+    shiny::uiOutput(paste0(id, "__sub"), class = "fig-sub"),
     shiny::plotOutput(id, height = height),
     shiny::uiOutput(paste0(id, "__cap"), class = "fig-note")
   )
 }
 
-###### T_07_07d: Wire Up the Lifted Captions ###################################
+###### T_07_07d: Wire Up the Lifted Labels ####################################
 # Note: Called once from the server. Defines, for every registered figure id,
-#   the output that prints the caption T_02_01c_draw_fn lifted out.
+#   the three outputs that print what T_02_01c_draw_fn lifted out: the title
+#   in the card header (the card's own name until the plot has drawn), the
+#   subtitle above the figure and the caption under it.
 
 T_07_07d_cap_fn <- function(output) {
   ids <- T_07_07e_ids_fn()
   for (id in ids) {
     local({
       this <- id
-      output[[paste0(this, "__cap")]] <- shiny::renderUI({
+      get_fn <- function(what) {
         store <- T_02_01d_capstore_fn()
-        txt   <- if (is.null(store)) NULL else store[[this]]
-        if (is.null(txt) || !nzchar(txt)) return(NULL)
+        lab   <- if (is.null(store)) NULL else store[[this]]
+        txt   <- if (is.list(lab)) lab[[what]] else NULL
+        if (is.null(txt) || !nzchar(txt)) NULL else txt
+      }
+      output[[paste0(this, "__ttl")]] <- shiny::renderUI({
+        txt <- get_fn("title")
+        if (is.null(txt)) txt <- T_07_07e_env$titles[[this]]
+        if (is.null(txt)) return(NULL)
+        shiny::tags$span(txt)
+      })
+      output[[paste0(this, "__sub")]] <- shiny::renderUI({
+        txt <- get_fn("subtitle")
+        if (is.null(txt)) return(NULL)
+        shiny::tags$p(txt)
+      })
+      output[[paste0(this, "__cap")]] <- shiny::renderUI({
+        txt <- get_fn("cap")
+        if (is.null(txt)) return(NULL)
         shiny::tags$p(txt)
       })
     })
@@ -1150,39 +1239,42 @@ T_07_07d_cap_fn <- function(output) {
 #   happens once when the app loads.
 
 T_07_07e_env <- new.env(parent = emptyenv())
-T_07_07e_env$ids <- character(0)
+T_07_07e_env$ids    <- character(0)
+T_07_07e_env$titles <- list()
 
 T_07_07e_ids_fn <- function() T_07_07e_env$ids
 
-T_07_07e_add_fn <- function(id) {
+T_07_07e_add_fn <- function(id, title = NULL) {
   if (!id %in% T_07_07e_env$ids) {
     T_07_07e_env$ids <- c(T_07_07e_env$ids, id)
   }
+  if (!is.null(title)) T_07_07e_env$titles[[id]] <- title
   invisible(NULL)
 }
 
 ###### T_07_07f: A Figure Card With Its Own Exports ############################
-# Note: A card holding one figure at 2:1, its lifted caption, and a Save PNG
-#   button that writes it at deck size via T_07_07h_exports_fn.
+# Note: A card holding one figure at 3:2, its lifted caption, and a Save PNG
+#   button in the header that writes it at deck size via T_07_07h_exports_fn.
 
 T_07_07f_figcard_fn <- function(id, title, height = "320px") {
-  T_07_07e_add_fn(id)
+  T_07_07e_add_fn(id, title)
   bslib::card(
     class = "fig-card",
-    bslib::card_header(title),
-    shiny::tags$div(class = "fig-r21",
+    bslib::card_header(
+      shiny::tags$div(
+        class = "fig-head",
+        shiny::uiOutput(paste0(id, "__ttl"), inline = TRUE),
+        shiny::downloadButton(paste0(id, "__png"), "Save PNG",
+                              class = "fig-save", icon = NULL))),
+    shiny::uiOutput(paste0(id, "__sub"), class = "fig-sub"),
+    shiny::tags$div(class = "fig-r32",
                     shiny::plotOutput(id, height = height)),
-    shiny::uiOutput(paste0(id, "__cap"), class = "fig-note"),
-    shiny::tags$div(
-      class = "fig-dl",
-      shiny::downloadButton(paste0(id, "__png"), "Save PNG",
-                            class = "btn btn-sm btn-outline-secondary")
-    )
+    shiny::uiOutput(paste0(id, "__cap"), class = "fig-note")
   )
 }
 
 ###### T_07_07g: Two Figures Side by Side ######################################
-# Note: Related figures two to a row, each at 2:1, stacking on a narrow
+# Note: Related figures two to a row, each at 3:2, stacking on a narrow
 #   screen. A lone figure gets half a row of its own.
 
 T_07_07g_pair_fn <- function(...) {
@@ -1224,9 +1316,10 @@ T_07_07i_fig_css_chr <- paste(
   "  border-color: #D8E0E6; color: #0056A4; background: #FFFFFF; }",
   ".fig-dl .btn:hover { background: #0056A4; color: #FFFFFF;",
   "  border-color: #0056A4; }",
-  "@supports (aspect-ratio: 2 / 1) {",
-  "  .fig-r21 > .shiny-plot-output { height: auto !important;",
-  "    aspect-ratio: 2 / 1; min-height: 0; overflow: hidden; }",
+  ".fig-r32 { width: 100%; }",
+  "@supports (aspect-ratio: 3 / 2) {",
+  "  .fig-r32 > .shiny-plot-output { height: auto !important;",
+  "    aspect-ratio: 3 / 2; min-height: 0; overflow: hidden; }",
   "}",
   sep = "\n"
 )
@@ -1256,7 +1349,8 @@ T_07_08_head_fn <- function() {
                        shiny::HTML(T_07_06b_mathjax_cfg_chr)),
     shiny::tags$script(src = T_07_06b_mathjax_src_chr),
     shiny::tags$script(shiny::HTML(T_07_07_mathjax_js_chr)),
-    shiny::tags$script(shiny::HTML(T_07_07b_save_js_chr))
+    shiny::tags$script(shiny::HTML(T_07_07b_save_js_chr)),
+    shiny::tags$script(shiny::HTML(T_07_07b2_eqfold_js_chr))
   )
 }
 
